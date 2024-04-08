@@ -1,0 +1,79 @@
+---
+title: "CPU and GPU Performance"
+author: "Leif Harvey"
+format: 
+  html:
+    embed-resources: true
+---
+
+```{r}
+#| warning: false
+#| echo: false
+
+library(tidyverse)
+library(plotly)
+library(broom)
+library(readr)
+
+chips_origional <- read_csv("chip_dataset.csv")
+
+chips <- chips_origional |> rename(transistors = `Transistors (million)`, die_size = `Die Size (mm^2)`, freq = `Freq (MHz)`, TDP = `TDP (W)`, process_size = `Process Size (nm)`, date = `Release Date`, fp16gflops = `FP16 GFLOPS`, fp32gflops = `FP32 GFLOPS`, fp64gflops = `FP64 GFLOPS`)
+
+```
+
+## Abstract
+
+ `<brief introduction>`
+ `<report major findings here>`
+
+
+## Introudction
+
+The project will examine performance of CPU and GPU chips made since 2000. The data set includes chips made by multiple vendors such as Intel, NVIDIA, ATI, and AMD. Other variables include the process size, thermal design power, die size, number of transistors, frequency, foundry, and GFLOPS. GFLOPS is a way to compare the performance of graphics cards and stands for a billion floating point operations per second.
+
+```{r}
+chips_origional |> slice(1:5) |> select(2:5, 9:11)
+```
+
+
+### Chip Type
+
+The data set is split roughly even with $2192$ CPUs and $2662$ GPUs.
+```{r}
+chips_origional |> group_by(Type) |> summarise(Count = n())
+```
+
+
+### Foundries
+
+The data set contains chips made from nine different foundries, with TSMC and Intel making the vast majority of the chips. $866$ chips didn't have a foundry listed.
+```{r}
+chips_origional |> group_by(Foundry) |> summarise(Count = n()) |> arrange(desc(Count))
+```
+
+
+### Vendors
+
+The data set contains chips from four vendors: AMD, Intel, NVIDIA, and ATI. Only $64$ of the chips were made from a different, unspecified vendor.
+```{r}
+chips_origional |> group_by(Vendor) |> summarise(Count = n()) |> arrange(desc(Count))
+```
+
+
+### Release Date
+
+The number of transistors in a chip is 
+
+```{r}
+ggplot(data = chips, aes(x = transistors)) + 
+  geom_histogram(fill = "lightblue", color = "darkblue") +
+  theme_minimal() + 
+  ylab("Number of Processors") + 
+  xlab("Transistors (millions)")
+
+# remove NAs before
+mean(chips$transistors)
+```
+
+
+
