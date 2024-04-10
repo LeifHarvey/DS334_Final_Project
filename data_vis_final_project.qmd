@@ -10,10 +10,12 @@ format:
 #| warning: false
 #| echo: false
 
+library(ggplot2)
 library(tidyverse)
 library(plotly)
 library(broom)
 library(readr)
+library(plotly)
 
 chips_origional <- read_csv("chip_dataset.csv")
 
@@ -21,13 +23,13 @@ chips <- chips_origional |> rename(transistors = `Transistors (million)`, die_si
 
 ```
 
-## Abstract
+# Abstract
 
  `<brief introduction>`
  `<report major findings here>`
 
 
-## Introduction
+# Introduction
 
 The project will examine performance of CPU and GPU chips made since 2000. The data set includes chips made by multiple vendors such as Intel, NVIDIA, ATI, and AMD. Other variables include the process size, thermal design power, die size, number of transistors, frequency, foundry, and GFLOPS. GFLOPS is a way to compare the performance of graphics cards and stands for a billion floating point operations per second.
 
@@ -35,6 +37,7 @@ The project will examine performance of CPU and GPU chips made since 2000. The d
 chips_origional |> slice(1:5) |> select(2:5, 9:11)
 ```
 
+## Feature Exploration
 
 ### Chip Type
 
@@ -114,18 +117,61 @@ no_na_p |> tidy()
 ```
 
 
+This project will focus on determining which foundries and vendors 
+
+```{r}
+#| code: false
+
+no_na_g <- chips |> filter(!is.na(fp32gflops))
+
+ggplot(data = no_na_g, aes(x = transistors, y = fp32gflops)) + geom_point() + theme_minimal()
+
+ggplot(data = no_na_g, aes(x = die_size, y = fp32gflops)) + geom_point() + theme_minimal()
+
+ggplot(data = no_na_g, aes(x = process_size, y = fp32gflops)) + geom_point() + theme_minimal()
+
+ggplot(data = no_na_g, aes(x = Foundry, y = fp32gflops)) + geom_point() + theme_minimal()
+
+ggplot(data = no_na_g, aes(x = Vendor, y = fp32gflops)) + geom_point() + theme_minimal()
+
+ggplot(data = no_na_g, aes(x = TDP, y = fp32gflops)) + geom_point() + theme_minimal()
+
+ggplot(data = no_na_g, aes(x = freq, y = fp32gflops)) + geom_point() + theme_minimal()
+
+ggplot(data = no_na_g, aes(x = date, y = fp32gflops)) + geom_point() + theme_minimal()
+```
+
+
+## Questions of Interest:
+
+Are some foundries clearly producing better performing products than others?
+
+Are some vendors clearly producing better performing products than others?
+
+Can we see Moore's Law in the data?
+
+What variables seem to play a role in a high  fp32gflop?
+
+Can we create a model to predict GFLOPS?
 
 
 
+# Is there a Best Foundry?
 
+One potential issue when looking a foundries and performance is that the foundries have partnerships with certain vendors, which may be producing better or worse products. Lets go ahead and look anyway with this in mind. The plot is interactive and shows the vendor when the points are hovered over.
 
+```{r}
+gpu <- chips |> filter(!is.na(fp32gflops))
 
+foundry_glops <- ggplot(data = gpu, aes(x = Foundry, y = fp32gflops, label = Vendor)) + 
+  geom_jitter(alpha = 0.5) + 
+  theme_minimal() + 
+  ylab("FP32GFLOPS") + 
+  labs(title = "Foundry vs FP-32-GFLOPS",
+       caption = "GFLOPS represents Billions of Floating Point Operations Per Second")
 
+ggplotly(foundry_glops, tooltip = "label")
+```
 
-
-
-
-
-
-
+It appears as Samsung is a proxy for NVIDIA as it mainly produces NVIDIA GPUs. TSMC produces products for everyone but Intel, but I'd say Intel mainly focuses on CPUs and many of the GPUs are just integrated ones. GF also has some high performing chips, which are all AMD chips.
 
