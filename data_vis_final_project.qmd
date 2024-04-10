@@ -27,7 +27,7 @@ chips <- chips_origional |> rename(transistors = `Transistors (million)`, die_si
  `<report major findings here>`
 
 
-## Introudction
+## Introduction
 
 The project will examine performance of CPU and GPU chips made since 2000. The data set includes chips made by multiple vendors such as Intel, NVIDIA, ATI, and AMD. Other variables include the process size, thermal design power, die size, number of transistors, frequency, foundry, and GFLOPS. GFLOPS is a way to compare the performance of graphics cards and stands for a billion floating point operations per second.
 
@@ -60,20 +60,72 @@ chips_origional |> group_by(Vendor) |> summarise(Count = n()) |> arrange(desc(Co
 ```
 
 
-### Release Date
+### Transistors
 
-The number of transistors in a chip is 
+The average number of transistors in a chip is $1929.922$ million, but the median number is $624$ million. The range is from $8$ million up to $54.2$ billion. The graph shows an extreme right skew.
 
 ```{r}
+#| warning: false
+
 ggplot(data = chips, aes(x = transistors)) + 
   geom_histogram(fill = "lightblue", color = "darkblue") +
   theme_minimal() + 
   ylab("Number of Processors") + 
   xlab("Transistors (millions)")
 
-# remove NAs before
-mean(chips$transistors)
+no_na_t <- chips |> select(transistors) |> filter(!is.na(transistors))
+no_na_t |> tidy()
 ```
+
+
+### Frequency
+
+The average processor frequency is $1484.406$ MHz, and the median frequency is $1073.5$ MHz. The range is from $100$ MHz up to $4700$ MHz. The graph shows a right skew in the data with a peak at around $500$ MHz.
+
+```{r}
+#| warning: false
+
+ggplot(data = chips, aes(x = freq)) + 
+  geom_histogram(fill = "lightblue", color = "darkblue") +
+  theme_minimal() + 
+  ylab("Number of Processors") + 
+  xlab("Frequency (MHz)")
+
+no_na_f <- chips |> select(freq) |> filter(!is.na(freq))
+no_na_f |> tidy()
+```
+
+
+### Processor Size
+
+The average processor size is $55.1$ nm, and the median size is $40$ nm. The range is from $0$ nm up to $250$ nm. The graph shows a right skew in the data with a peak at around $25$ nm.
+
+```{r}
+#| warning: false
+
+ggplot(data = chips, aes(x = process_size)) + 
+  geom_histogram(fill = "lightblue", color = "darkblue") +
+  theme_minimal() + 
+  ylab("Number of Processors") + 
+  xlab("Processor Size (nm)")
+
+no_na_p <- chips |> select(process_size) |> filter(!is.na(process_size))
+no_na_p |> tidy()
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
