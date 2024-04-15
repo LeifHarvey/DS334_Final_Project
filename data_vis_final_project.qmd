@@ -120,15 +120,16 @@ no_na_p |> tidy()
 This project will focus on determining which foundries and vendors 
 
 
+
 ## Questions of Interest:
+
+`Are we able to predict the foundry/vendor based on GPU statistics?`
 
 Are some foundries clearly producing better performing products than others?
 
-Are some vendors clearly producing better performing products than others?
-
 Can we see Moore's Law in the data?
 
-What variables seem to play a role in a high  fp32gflop?
+What variables seem to play a role in a high fp32gflop?
 
 Can we create a model to predict GFLOPS?
 
@@ -153,23 +154,40 @@ ggplotly(foundry_glops, tooltip = "label")
 
 It appears as Samsung is a proxy for NVIDIA as it mainly produces NVIDIA GPUs. TSMC produces products for everyone but Intel, but I'd say Intel mainly focuses on CPUs and many of the GPUs are just integrated ones. GF also has some high performing chips, which are all AMD chips.
 
+# Moore's Law
 
-
+Co-founder of Fairchild Semiconductor and Co-founder and CEO of Intel Gordon Moore made the observation that the number of transistors in an integrated circuit doubled about every 2 years. In 1965, Moore predicted a doubling every year for at least a decade, and in 1975, Moore changed his prediction to every two years which has held since then. We can look at the number of transistors over the time period of this data set which has chips since 2000.
 
 ```{r}
-#| code: false
+foundry_glops <- ggplot(data = chips, aes(x = date, y = transistors, label = date)) + 
+  geom_point(alpha = 0.5) + 
+  theme_minimal() + 
+  ylab("Transistors") + 
+  labs(title = "Transistors over Time")
+
+ggplotly(foundry_glops, tooltip = "label")
+```
+
+The plot shows an exponential trend which indeed lines up with Moore's prediction. The graph shows that we have really just hit the exponential curve k
+
+# FP 32 GFLOPS
+```{r}
 
 no_na_g <- chips |> filter(!is.na(fp32gflops))
 
-ggplot(data = no_na_g, aes(x = transistors, y = fp32gflops)) + geom_point() + theme_minimal()
+ggplot(data = no_na_g, aes(x = transistors, y = fp32gflops)) + 
+  geom_point() + 
+  theme_minimal() + 
+  ylab("Billion Floating Point Operation per Second") + 
+  xlab("Transistors")
 
 ggplot(data = no_na_g, aes(x = die_size, y = fp32gflops)) + geom_point() + theme_minimal()
 
 ggplot(data = no_na_g, aes(x = process_size, y = fp32gflops)) + geom_point() + theme_minimal()
 
-ggplot(data = no_na_g, aes(x = Foundry, y = fp32gflops)) + geom_point() + theme_minimal()
+#ggplot(data = no_na_g, aes(x = Foundry, y = fp32gflops)) + geom_point() + theme_minimal()
 
-ggplot(data = no_na_g, aes(x = Vendor, y = fp32gflops)) + geom_point() + theme_minimal()
+#ggplot(data = no_na_g, aes(x = Vendor, y = fp32gflops)) + geom_point() + theme_minimal()
 
 ggplot(data = no_na_g, aes(x = TDP, y = fp32gflops)) + geom_point() + theme_minimal()
 
@@ -177,3 +195,26 @@ ggplot(data = no_na_g, aes(x = freq, y = fp32gflops)) + geom_point() + theme_min
 
 ggplot(data = no_na_g, aes(x = date, y = fp32gflops)) + geom_point() + theme_minimal()
 ```
+
+
+# Prediction Model
+Predict foundry/vendor based on metrics?
+
+KNN?
+
+```{r}
+remove_na <- chips |> filter(!is.na(die_size)) |> filter(!is.na(transistors)) |> filter(!is.na(freq)) |> filter(!is.na(process_size)) |> filter(!is.na(TDP))
+
+vendor_lm <- glm(Vendor ~ die_size + process_size + freq + TDP, data = remove_na)
+summary(vendor_lm)
+```
+
+
+
+# Bibliography
+
+https://en.wikipedia.org/wiki/Moore%27s_law
+
+https://www.gpu-monkey.com/en/gpu_benchmark-fp32-3 
+
+
