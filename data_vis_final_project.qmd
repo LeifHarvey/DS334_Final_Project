@@ -119,28 +119,6 @@ no_na_p |> tidy()
 
 This project will focus on determining which foundries and vendors 
 
-```{r}
-#| code: false
-
-no_na_g <- chips |> filter(!is.na(fp32gflops))
-
-ggplot(data = no_na_g, aes(x = transistors, y = fp32gflops)) + geom_point() + theme_minimal()
-
-ggplot(data = no_na_g, aes(x = die_size, y = fp32gflops)) + geom_point() + theme_minimal()
-
-ggplot(data = no_na_g, aes(x = process_size, y = fp32gflops)) + geom_point() + theme_minimal()
-
-ggplot(data = no_na_g, aes(x = Foundry, y = fp32gflops)) + geom_point() + theme_minimal()
-
-ggplot(data = no_na_g, aes(x = Vendor, y = fp32gflops)) + geom_point() + theme_minimal()
-
-ggplot(data = no_na_g, aes(x = TDP, y = fp32gflops)) + geom_point() + theme_minimal()
-
-ggplot(data = no_na_g, aes(x = freq, y = fp32gflops)) + geom_point() + theme_minimal()
-
-ggplot(data = no_na_g, aes(x = date, y = fp32gflops)) + geom_point() + theme_minimal()
-```
-
 
 ## Questions of Interest:
 
@@ -175,3 +153,27 @@ ggplotly(foundry_glops, tooltip = "label")
 
 It appears as Samsung is a proxy for NVIDIA as it mainly produces NVIDIA GPUs. TSMC produces products for everyone but Intel, but I'd say Intel mainly focuses on CPUs and many of the GPUs are just integrated ones. GF also has some high performing chips, which are all AMD chips.
 
+
+
+
+```{r}
+#| code: false
+
+no_na_g <- chips |> filter(!is.na(fp32gflops))
+
+ggplot(data = no_na_g, aes(x = transistors, y = fp32gflops)) + geom_point() + theme_minimal()
+
+ggplot(data = no_na_g, aes(x = die_size, y = fp32gflops)) + geom_point() + theme_minimal()
+
+ggplot(data = no_na_g, aes(x = process_size, y = fp32gflops)) + geom_point() + theme_minimal()
+
+ggplot(data = no_na_g, aes(x = Foundry, y = fp32gflops)) + geom_point() + theme_minimal()
+
+ggplot(data = no_na_g, aes(x = Vendor, y = fp32gflops)) + geom_point() + theme_minimal()
+
+ggplot(data = no_na_g, aes(x = TDP, y = fp32gflops)) + geom_point() + theme_minimal()
+
+ggplot(data = no_na_g, aes(x = freq, y = fp32gflops)) + geom_point() + theme_minimal()
+
+ggplot(data = no_na_g, aes(x = date, y = fp32gflops)) + geom_point() + theme_minimal()
+```
