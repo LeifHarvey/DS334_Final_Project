@@ -133,6 +133,8 @@ What variables seem to play a role in a high fp32gflop?
 
 Can we create a model to predict GFLOPS?
 
+Can we create a model to predict Vendor?
+
 
 
 # Is there a Best Foundry?
@@ -210,92 +212,62 @@ summary(vendor_lm)
 ```
 
 
+# Predicting Vendor with KNN
+```{r}
+library(GGally)
+library(class)
+library(duckdb)
+library(DBI)
+
+chips_nona <- chips |> filter(!is.na(die_size)) |> filter(!is.na(transistors)) |> filter(!is.na(freq)) |> filter(!is.na(process_size)) |> filter(!is.na(TDP)) |> filter(!is.na(Type)) |> filter(!is.na(Foundry))
+
+chips_nona |> select(3, 5:9)
+
+# FIX 
+#chips_nona$Type |> factor(chips_nona$Type)
+
+ggpairs(data = chips_nona, columns = c(5:9), 
+        lower = list(combo = wrap(ggally_facethist, bins = 15)))
+
+chips_scaled <- chips_nona |> mutate(across(where(is.numeric), ~ (.x - min(.x))/(max(.x) - min(.x)))) 
+
+train <- chips_scaled |> slice_sample(n = 1500)
+no_train <- anti_join(remove_train, train)
+test <- no_train |> slice_sample(n = 1500)
+val <- anti_join(no_train, test)
+
+train_clean <- train |> select(process_size, TDP, die_size, transistors, freq)
+test_clean <- test |> select(process_size, TDP, die_size, transistors, freq)
+val_clean <- val |> select(process_size, TDP, die_size, transistors, freq)
+
+train_cat <- train$Vendor
+test_cat <- test$Vendor
+val_cat <- val$Vendor
+
+best_k = 0
+best_rate = 0
+
+for (i in 1:20) {
+  knn_mod <- knn(train = train_clean, test = test_clean, cl = train_cat, k = i)
+  tab <- table(knn_mod, test_cat) 
+  rate = sum(diag(tab)) / sum(tab)
+  
+  if (best_rate < rate) {
+    best_k = i
+    best_rate = rate
+  }
+}
+
+best_rate_rounded <- round(best_rate, 4)
+
+print(glue::glue("Best k: ", best_k, ", Rate: ", best_rate_rounded))
+```
+
+
 
 # Bibliography
 
 https://en.wikipedia.org/wiki/Moore%27s_law
 
 https://www.gpu-monkey.com/en/gpu_benchmark-fp32-3 
-
-
-
-# KNN
-
-# 15.3
-```{r}
-library(GGally)
-ggpairs(data = train_sample, columns = c(4, 5, 6, 3), 
-        lower = list(combo = wrap(ggally_facethist, bins = 15)))
-
-# lower changes the number of bins in the faceted histograms in the bottom row (usually ignore)
-
-# columns allows you to specify which columns you want to look at (very important)
-
-
-library(tidyverse)
-set.seed(11232020)
-
-# scale the quantitative predictors
-pokemon_scaled <- pokemon |>
-    mutate(across(where(is.numeric), ~ (.x - min(.x))(max(.x) - min(.x)))) 
-
-train_sample_2 <- pokemon_scaled |>
-  slice_sample(n = 70)
-test_sample_2 <- anti_join(pokemon_scaled, train_sample_2)
-
-
-library(class)
-
-## create a data frame that only has the predictors
-## that we will use
-train_small <- train_sample_2 |> select(HP, Attack, Defense, Speed)
-test_small <- test_sample_2 |> select(HP, Attack, Defense, Speed)
-
-## put our response variable into a vector
-train_cat <- train_sample_2$Type
-test_cat <- test_sample_2$Type
-
-knn_mod <- knn(train = train_small, test = test_small,
-               cl = train_cat, k = 9)
-knn_mod
-
-table(knn_mod, test_cat) 
-
-
-# automatically obtains the classification rate from the confusion matrix:
-tab <- table(knn_mod, test_cat) 
-sum(diag(tab)) / sum(tab)
-#> [1] 0.36
-```
-
-
-# Exercise 15.3
-```{r}
-knn_mod2 <- knn(train = train_small, test = test_small, cl = train_cat, k = 9)
-knn_mod2
-
-table(knn_mod2, test_cat)
-tab <- table(knn_mod, test_cat)
-sum(diag(tab)) / sum(tab)
-```
-
-# Project 3
-```{r}
-# function that automates running knn with different k values
-get_class_rate <- function(k = 10) {
-  knn_modA <- knn(train = train_song_small, test = test_song_small,
-                  cl = train_song, k = k)
-  res_tab <- table(knn_modA, test_song)
-  sum(diag(res_tab)) / sum(res_tab)
-}
-
-classification_rates <- map(1:50, get_class_rate) |> unlist()
-class_rate_df <- tibble(ks = 1:50, classification_rates)
-ggplot(data = class_rate_df, aes(x = ks, y = classification_rates)) + geom_line(size = 1)
-class_rate_df |> arrange(desc(classification_rates)) |> slice(1)
-```
-
-
-
-
 
