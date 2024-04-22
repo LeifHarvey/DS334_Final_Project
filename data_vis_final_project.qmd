@@ -117,8 +117,7 @@ no_na_p |> tidy()
 ```
 
 
-This project will focus on determining which foundries and vendors 
-
+This project will focus on determining which foundries and vendors
 
 
 ## Questions of Interest:
@@ -142,6 +141,8 @@ Can we create a model to predict Vendor?
 One potential issue when looking a foundries and performance is that the foundries have partnerships with certain vendors, which may be producing better or worse products. Lets go ahead and look anyway with this in mind. The plot is interactive and shows the vendor when the points are hovered over.
 
 ```{r}
+#| warning: false
+
 gpu <- chips |> filter(!is.na(fp32gflops))
 
 foundry_glops <- ggplot(data = gpu, aes(x = Foundry, y = fp32gflops, label = Vendor)) + 
@@ -154,13 +155,15 @@ foundry_glops <- ggplot(data = gpu, aes(x = Foundry, y = fp32gflops, label = Ven
 ggplotly(foundry_glops, tooltip = "label")
 ```
 
-It appears as Samsung is a proxy for NVIDIA as it mainly produces NVIDIA GPUs. TSMC produces products for everyone but Intel, but I'd say Intel mainly focuses on CPUs and many of the GPUs are just integrated ones. GF also has some high performing chips, which are all AMD chips.
+It appears as Samsung is a proxy for NVIDIA as it mainly produces NVIDIA GPUs. TSMC produces products for everyone but Intel. I'd say Intel mainly focuses on CPUs and many of the GPUs are just integrated ones. GF also has some high performing chips, which are all AMD chips.
 
 # Moore's Law
 
 Co-founder of Fairchild Semiconductor and Co-founder and CEO of Intel Gordon Moore made the observation that the number of transistors in an integrated circuit doubled about every 2 years. In 1965, Moore predicted a doubling every year for at least a decade, and in 1975, Moore changed his prediction to every two years which has held since then. We can look at the number of transistors over the time period of this data set which has chips since 2000.
 
 ```{r}
+#| warning: false
+
 foundry_glops <- ggplot(data = chips, aes(x = date, y = transistors, label = date)) + 
   geom_point(alpha = 0.5) + 
   theme_minimal() + 
@@ -170,10 +173,11 @@ foundry_glops <- ggplot(data = chips, aes(x = date, y = transistors, label = dat
 ggplotly(foundry_glops, tooltip = "label")
 ```
 
-The plot shows an exponential trend which indeed lines up with Moore's prediction. The graph shows that we have really just hit the exponential curve k
+The plot shows an exponential trend which indeed lines up with Moore's prediction. The graph shows that we have really just hit the exponential curve.
 
 # FP 32 GFLOPS
 ```{r}
+#| warning: false
 
 no_na_g <- chips |> filter(!is.na(fp32gflops))
 
@@ -205,8 +209,11 @@ Predict foundry/vendor based on metrics?
 KNN?
 
 ```{r}
+#| warning: false
+
 remove_na <- chips |> filter(!is.na(die_size)) |> filter(!is.na(transistors)) |> filter(!is.na(freq)) |> filter(!is.na(process_size)) |> filter(!is.na(TDP))
 
+#remove_na$Vendor <- as.numeric(remove_na$Vendor)
 #vendor_lm <- glm(Vendor ~ die_size + process_size + freq + TDP, data = remove_na)
 #summary(vendor_lm)
 ```
@@ -214,6 +221,8 @@ remove_na <- chips |> filter(!is.na(die_size)) |> filter(!is.na(transistors)) |>
 
 # Predicting Vendor with KNN
 ```{r}
+#| warning: false
+
 library(GGally)
 library(class)
 library(duckdb)
@@ -222,9 +231,6 @@ library(DBI)
 chips_nona <- chips |> filter(!is.na(die_size)) |> filter(!is.na(transistors)) |> filter(!is.na(freq)) |> filter(!is.na(process_size)) |> filter(!is.na(TDP)) |> filter(!is.na(Type)) |> filter(!is.na(Foundry))
 
 chips_nona |> select(3, 5:9)
-
-# FIX 
-#chips_nona$Type |> factor(chips_nona$Type)
 
 ggpairs(data = chips_nona, columns = c(5:9), 
         lower = list(combo = wrap(ggally_facethist, bins = 15)))
@@ -258,11 +264,17 @@ for (i in 1:20) {
   }
 }
 
-best_rate_rounded <- round(best_rate, 4)
+knn_final <- knn(train = train_clean, test = val_clean, cl = train_cat, k = 1)
+tab <- table(knn_mod, test_cat) 
+val_rate = sum(diag(tab)) / sum(tab)
 
-print(glue::glue("Best k: ", best_k, ", Rate: ", best_rate_rounded))
+best_rate_rounded <- round(best_rate, 4)
+val_rate_rounded <- round(val_rate, 4)
+
+print(glue::glue("Best k: ", best_k, ", Rate: ", best_rate_rounded, " Validation Rate: ", val_rate_rounded))
 ```
 
+The KNN model only gives an accuracy of $0.713$ which is not that impressive.
 
 
 # Bibliography
@@ -271,5 +283,4 @@ https://en.wikipedia.org/wiki/Moore%27s_law
 
 https://www.gpu-monkey.com/en/gpu_benchmark-fp32-3 
 
-$9$
 
