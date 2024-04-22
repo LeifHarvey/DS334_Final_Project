@@ -207,8 +207,8 @@ KNN?
 ```{r}
 remove_na <- chips |> filter(!is.na(die_size)) |> filter(!is.na(transistors)) |> filter(!is.na(freq)) |> filter(!is.na(process_size)) |> filter(!is.na(TDP))
 
-vendor_lm <- glm(Vendor ~ die_size + process_size + freq + TDP, data = remove_na)
-summary(vendor_lm)
+#vendor_lm <- glm(Vendor ~ die_size + process_size + freq + TDP, data = remove_na)
+#summary(vendor_lm)
 ```
 
 
@@ -232,7 +232,7 @@ ggpairs(data = chips_nona, columns = c(5:9),
 chips_scaled <- chips_nona |> mutate(across(where(is.numeric), ~ (.x - min(.x))/(max(.x) - min(.x)))) 
 
 train <- chips_scaled |> slice_sample(n = 1500)
-no_train <- anti_join(remove_train, train)
+no_train <- anti_join(chips_scaled, train)
 test <- no_train |> slice_sample(n = 1500)
 val <- anti_join(no_train, test)
 
@@ -270,4 +270,6 @@ print(glue::glue("Best k: ", best_k, ", Rate: ", best_rate_rounded))
 https://en.wikipedia.org/wiki/Moore%27s_law
 
 https://www.gpu-monkey.com/en/gpu_benchmark-fp32-3 
+
+$9$
 
