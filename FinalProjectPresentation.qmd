@@ -1,0 +1,34 @@
+---
+title: "CPU and GPU Performance"
+subtitle: "By Leif Harvey"
+format: revealjs
+---
+
+```{r}
+#| warning: false
+#| echo: false
+
+library(ggplot2)
+library(tidyverse)
+library(plotly)
+library(broom)
+library(readr)
+library(plotly)
+library(class)
+library(duckdb)
+library(DBI)
+
+chips_origional <- read_csv("chip_dataset.csv")
+
+chips <- chips_origional |> rename(transistors = `Transistors (million)`, die_size = `Die Size (mm^2)`, freq = `Freq (MHz)`, TDP = `TDP (W)`, process_size = `Process Size (nm)`, date = `Release Date`, fp16gflops = `FP16 GFLOPS`, fp32gflops = `FP32 GFLOPS`, fp64gflops = `FP64 GFLOPS`)
+
+remove_na <- chips |> filter(!is.na(die_size)) |> filter(!is.na(transistors)) |> filter(!is.na(freq)) |> filter(!is.na(process_size)) |> filter(!is.na(TDP))
+
+chips_nona <- chips |> filter(!is.na(die_size)) |> filter(!is.na(transistors)) |> filter(!is.na(freq)) |> filter(!is.na(process_size)) |> filter(!is.na(TDP)) |> filter(!is.na(Type)) |> filter(!is.na(Foundry))
+
+```
+
+```{r}
+
+```
+
