@@ -284,3 +284,16 @@ https://en.wikipedia.org/wiki/Moore%27s_law
 https://www.gpu-monkey.com/en/gpu_benchmark-fp32-3 
 
 
+
+KAGGLE
+
+A dataset with 2,185 CPUs and 2,668 GPUs to help researchers understand the development trend of CPUs and GPUs.
+
+Here are some interesting facts supported by the data:
+
+Moore's Law still holds, especially in GPUs.
+Dannard Scaling is still valid in general.
+CPUs have higher frequencies, but GPUs are catching up.
+GPU performance doubles every 1.5 years.
+GPU performance improvement is a joint effect of smaller transistors, larger die size, and higher frequency.
+High-end GPUs tends to first use new semiconductor technologies. Low-end GPUs may use old technologies for a few years.

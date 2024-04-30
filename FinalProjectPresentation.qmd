@@ -4,9 +4,26 @@ subtitle: "By Leif Harvey"
 format: revealjs
 ---
 
+## Introduction to `Chips` {.smaller}
+
+* this data set has 2185 CPUs and 2668 GPUs from 2000 till 2020.
+* the data comes from Kaggle.com and was last updated in 2022.
+* variables of interest:
+    * `transistors` is the number of transistors in the chip in millions.
+    * `die_size` is the die size used in squared mm.
+    * `freq` is the chip's frequency in MHz.
+    * `TDP` is the thermal design power measured in watts.
+    * `process_size` is the size of the processor in nm.
+    * `date` is the chip's release date.
+    * `Vendor` is the chip's brand.
+    * `Foundry` is the company who produced the chip.
+    * `fp16gflops` is a test for the number of 16 bit floating point operations a GPU can do in a second in billions.
+
+
 ```{r}
 #| warning: false
 #| echo: false
+#| output: false
 
 library(ggplot2)
 library(tidyverse)
@@ -28,7 +45,51 @@ chips_nona <- chips |> filter(!is.na(die_size)) |> filter(!is.na(transistors)) |
 
 ```
 
+## Foundry Comparision
 ```{r}
+#| warning: false
 
+gpu <- chips |> filter(!is.na(fp32gflops))
+
+foundry_glops <- ggplot(data = gpu, aes(x = Foundry, y = fp32gflops, label = Vendor)) + 
+  geom_jitter(alpha = 0.5) + 
+  theme_minimal() + 
+  ylab("FP32GFLOPS") + 
+  labs(title = "Foundry vs FP-32-GFLOPS",
+       caption = "GFLOPS represents Billions of Floating Point Operations Per Second")
+
+ggplotly(foundry_glops, tooltip = "label")
 ```
+
+
+## Moore's Law
+```{r}
+#| warning: false
+
+foundry_glops <- ggplot(data = chips, aes(x = date, y = transistors, label = date)) + 
+  geom_point(alpha = 0.5) + 
+  theme_minimal() + 
+  ylab("Transistors") + 
+  labs(title = "Transistors over Time")
+
+ggplotly(foundry_glops, tooltip = "label")
+```
+
+
+## Vendor Prediction {.smaller}
+
+* Used a KNN model with train, test, and validation data to attempt to predict vendor based on 
+  * die size (`die_size`)
+  * number of transistors (`transistors`)
+  * thermal design power (`TDP`) 
+  * processor size (`process_size`)
+  * frequency (`freq`)
+
+Testing for the best number of neighbors, using $k = 1$ gave the best accuracy rate.
+
+The KNN model only gives an accuracy of $0.713$ which is not that impressive.
+
+
+
+
 
