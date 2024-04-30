@@ -17,6 +17,14 @@ library(broom)
 library(readr)
 library(plotly)
 
+library(keras)
+library(tensorflow)
+
+install_tensorflow()
+
+library(keras)
+library(tensorflow)
+
 chips_origional <- read_csv("chip_dataset.csv")
 
 chips <- chips_origional |> rename(transistors = `Transistors (million)`, die_size = `Die Size (mm^2)`, freq = `Freq (MHz)`, TDP = `TDP (W)`, process_size = `Process Size (nm)`, date = `Release Date`, fp16gflops = `FP16 GFLOPS`, fp32gflops = `FP32 GFLOPS`, fp64gflops = `FP64 GFLOPS`)
@@ -164,11 +172,14 @@ Co-founder of Fairchild Semiconductor and Co-founder and CEO of Intel Gordon Moo
 ```{r}
 #| warning: false
 
+chips$date <- as.Date(chips$date)
+
 foundry_glops <- ggplot(data = chips, aes(x = date, y = transistors, label = date)) + 
   geom_point(alpha = 0.5) + 
   theme_minimal() + 
   ylab("Transistors") + 
-  labs(title = "Transistors over Time")
+  labs(title = "Transistors over Time") +
+  scale_x_date(date_labels = "%Y-%m")  # Adjust date format as needed
 
 ggplotly(foundry_glops, tooltip = "label")
 ```
@@ -228,9 +239,9 @@ library(class)
 library(duckdb)
 library(DBI)
 
-chips_nona <- chips |> filter(!is.na(die_size)) |> filter(!is.na(transistors)) |> filter(!is.na(freq)) |> filter(!is.na(process_size)) |> filter(!is.na(TDP)) |> filter(!is.na(Type)) |> filter(!is.na(Foundry))
+chips_nona <- chips |> filter(!is.na(die_size)) |> filter(!is.na(transistors)) |> filter(!is.na(freq)) |> filter(!is.na(process_size)) |> filter(!is.na(TDP))
 
-chips_nona |> select(3, 5:9)
+chips_nona |> select(5:8)
 
 ggpairs(data = chips_nona, columns = c(5:9), 
         lower = list(combo = wrap(ggally_facethist, bins = 15)))
@@ -275,6 +286,58 @@ print(glue::glue("Best k: ", best_k, ", Rate: ", best_rate_rounded, " Validation
 ```
 
 The KNN model only gives an accuracy of $0.713$ which is not that impressive.
+
+## Neural Network
+```{r}
+chips_nona <- chips |> filter(!is.na(die_size)) |> filter(!is.na(transistors)) |> filter(!is.na(freq)) |> filter(!is.na(process_size)) |> filter(!is.na(TDP))
+
+chips_nona <- chips_nona |> select(5:9, 11)
+
+chips_scaled <- chips_nona |> mutate(across(where(is.numeric), ~ (.x - min(.x))/(max(.x) - min(.x)))) 
+
+train <- chips_scaled |> slice_sample(n = 1500)
+no_train <- anti_join(chips_scaled, train)
+test <- no_train |> slice_sample(n = 1500)
+val <- anti_join(no_train, test)
+
+train_clean <- train |> select(process_size, TDP, die_size, transistors, freq)
+test_clean <- test |> select(process_size, TDP, die_size, transistors, freq)
+val_clean <- val |> select(process_size, TDP, die_size, transistors, freq)
+
+train <- train |> mutate(Vendor = factor(Vendor))
+test <- test |> mutate(Vendor = factor(Vendor))
+val <- val |> mutate(Vendor = factor(Vendor))
+
+train_cat <- train |> pull(Vendor) |> as.factor() |> as.numeric()
+test_cat <- test |> pull(Vendor) |> as.factor() |> as.numeric()
+val_cat <- val |> pull(Vendor) |> as.factor() |> as.numeric()
+
+model <- keras_model_sequential()
+
+model |>
+  layer_dense(units = 8,input_shape = ncol(train)) |>
+  layer_dense(units = 8, activation = 'relu') |>
+  layer_dense(units = 8, activation = 'relu') |>
+  layer_dense(units = 4, activation = 'softmax')
+
+
+model |> compile(
+  optimizer = 'adam',
+  loss = 'mean_squared_error',
+  metrics = c('accuracy')
+)
+
+history <- model |> fit(
+  train_clean, train_cat,
+  epochs = 100,
+  batch_size = 32,
+  validation_data = list(val_clean, val_cat)
+)
+
+eval <- model |> evaluate(test_clean, test_cat)
+print(eval)
+```
+
 
 
 # Bibliography

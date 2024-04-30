@@ -61,16 +61,50 @@ foundry_glops <- ggplot(data = gpu, aes(x = Foundry, y = fp32gflops, label = Ven
 ggplotly(foundry_glops, tooltip = "label")
 ```
 
-
 ## Moore's Law
 ```{r}
 #| warning: false
+
+chips$date <- as.Date(chips$date)
 
 foundry_glops <- ggplot(data = chips, aes(x = date, y = transistors, label = date)) + 
   geom_point(alpha = 0.5) + 
   theme_minimal() + 
   ylab("Transistors") + 
-  labs(title = "Transistors over Time")
+  labs(title = "Transistors over Time") +
+  scale_x_date(date_labels = "%Y-%m")  # Adjust date format as needed
+
+ggplotly(foundry_glops, tooltip = "label")
+```
+
+## Moore's Law CPU
+```{r}
+#| warning: false
+
+CPU_chips <- chips |> filter(Type == "CPU")
+
+foundry_glops <- ggplot(data = CPU_chips, aes(x = date, y = transistors, label = date)) + 
+  geom_point(alpha = 0.5) + 
+  theme_minimal() + 
+  ylab("Transistors") + 
+  labs(title = "CPU Transistors over Time") +
+  scale_x_date(date_labels = "%Y-%m")  # Adjust date format as needed
+
+ggplotly(foundry_glops, tooltip = "label")
+```
+
+## Moore's Law GPU
+```{r}
+#| warning: false
+
+GPU_chips <- chips |> filter(Type == "GPU")
+
+foundry_glops <- ggplot(data = GPU_chips, aes(x = date, y = transistors, label = date)) + 
+  geom_point(alpha = 0.5) + 
+  theme_minimal() + 
+  ylab("Transistors") + 
+  labs(title = "GPU Transistors over Time") +
+  scale_x_date(date_labels = "%Y-%m")  # Adjust date format as needed
 
 ggplotly(foundry_glops, tooltip = "label")
 ```
