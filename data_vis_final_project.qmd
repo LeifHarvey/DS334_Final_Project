@@ -20,7 +20,7 @@ library(plotly)
 library(keras)
 library(tensorflow)
 
-install_tensorflow()
+#install_tensorflow()
 
 library(keras)
 library(tensorflow)
@@ -315,7 +315,7 @@ val_cat <- val |> pull(Vendor) |> as.factor() |> as.numeric()
 model <- keras_model_sequential()
 
 model |>
-  layer_dense(units = 8,input_shape = ncol(train)) |>
+  layer_dense(units = 8, input_shape = ncol(train), activation = "relu") |>
   layer_dense(units = 8, activation = 'relu') |>
   layer_dense(units = 8, activation = 'relu') |>
   layer_dense(units = 4, activation = 'softmax')
@@ -328,16 +328,54 @@ model |> compile(
 )
 
 history <- model |> fit(
-  train_clean, train_cat,
+  as.matrix(train_clean), train_cat,
   epochs = 100,
   batch_size = 32,
-  validation_data = list(val_clean, val_cat)
+  validation_data = list(as.matrix(val_clean), val_cat)
 )
 
 eval <- model |> evaluate(test_clean, test_cat)
 print(eval)
 ```
 
+
+```{r}
+## install.packages("neuralnet")
+library(neuralnet)
+library(tidyverse)
+
+chips_nona <- chips |> filter(!is.na(die_size)) |> filter(!is.na(transistors)) |> filter(!is.na(freq)) |> filter(!is.na(process_size)) |> filter(!is.na(TDP))
+
+chips_nona <- chips_nona |> select(5:9, 11)
+
+chips_scaled <- chips_nona |> mutate(across(where(is.numeric), ~ (.x - min(.x))/(max(.x) - min(.x)))) 
+
+train <- chips_scaled |> slice_sample(n = 1500)
+no_train <- anti_join(chips_scaled, train)
+test <- no_train |> slice_sample(n = 1500)
+val <- anti_join(no_train, test)
+
+nn <- neuralnet(Vendor ~ die_size + transistors + freq + process_size + TDP,
+                data = train,
+                hidden = c(4, 3),
+                linear.output = FALSE)
+
+plot(nn, rep = "best")
+
+preds <- predict(nn, test) |> data.frame()
+colnames(preds) <- c("AMD", "Intel", "NVIDIA", "ATI", "other")
+
+## figure out which species has the highest value for each row
+class_preds <- preds |> mutate(id = row_number()) |>
+  pivot_longer(1:3) |>
+  group_by(id) |>
+  filter(value == max(value)) |>
+  pull(name)
+
+## make classification table: perfect classification because
+## species of penguins are very easy to classify
+table(class_preds, test |> pull(species))
+```
 
 
 # Bibliography
